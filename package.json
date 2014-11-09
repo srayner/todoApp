@@ -1,0 +1,14 @@
+{
+    "name": "ToDoApp",
+    "version": "0.0.1",
+    "description": "Simple to do app using angular, node and MongoDB",
+    "main": "server.js",
+    "author": "srayner",
+    "dependencies": {
+        "express": "~4.7.2",
+        "mongoose": "~3.6.2",
+        "morgan": "~1.2.2",
+        "body-parser": "~1.5.2",
+        "method-override": "~2.1.2"
+    }    
+}
