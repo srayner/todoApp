@@ -1,8 +1,8 @@
 // server.js
 
 // set up ======================================================================
-var express  = require('express');
-var app      = express();                   // create our app with express
+var express = require('express');
+var app = express();                   // create our app with express
 var mongoose = require('mongoose');         // mongoose for mongodb
 var morgan = require('morgan');             // log requests to the console (express4)
 var bodyParser = require('body-parser');         // pull information from HTML POST (express4)
@@ -14,73 +14,101 @@ app.use(express.static(__dirname + '/public'));                 // set the stati
 app.use(morgan('dev'));                                         // log every request to the console
 app.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
 app.use(bodyParser.json());                                     // parse application/json
-app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
 app.use(methodOverride());
 
-// define model =================
-var Todo = mongoose.model('Todo', {
-    text : String
+// define model ================================================================
+var Task = mongoose.model('Task', {
+    text : String,
+    due: String
 });
 
-// routes ======================================================================
+// api (routes) ================================================================
 
-    // api ---------------------------------------------------------------------
-    // get all todos
-    app.get('/api/todos', function(req, res) {
-
-        // use mongoose to get all todos in the database
-        Todo.find(function(err, todos) {
-
-            // if there is an error retrieving, send the error. nothing after res.send(err) will execute
-            if (err)
-                res.send(err);
-
-            res.json(todos); // return all todos in JSON format
-        });
+// GET - return all tasks
+app.get('/api/tasks', function(req, res) {
+    Task.find(function(err, tasks) {
+        if (err) {
+            res.send(err);
+        } else {
+            res.json(tasks);
+        }
     });
+});
 
-    // create todo and send back all todos after creation
-    app.post('/api/todos', function(req, res) {
-
-        // create a todo, information comes from AJAX request from Angular
-        Todo.create({
-            text : req.body.text,
-            done : false
-        }, function(err, todo) {
-            if (err)
-                res.send(err);
-
-            // get and return all the todos after you create another
-            Todo.find(function(err, todos) {
-                if (err)
+// POST - create new task and send back all tasks after creation
+app.post('/api/tasks', function(req, res) {
+    Task.create({
+        text : req.body.text,
+        due : req.body.due,
+        done : false
+    }, function(err, task) {
+        if (err) {
+            res.send(err);
+        } else {
+            Task.find(function(err, tasks) {
+                if (err) {
                     res.send(err);
-                res.json(todos);
+                } else {
+                    res.json(tasks);
+                }
             });
-        });
-
+        }
     });
+});
 
-    // delete a todo
-    app.delete('/api/todos/:todo_id', function(req, res) {
-        Todo.remove({
-            _id : req.params.todo_id
-        }, function(err, todo) {
-            if (err)
-                res.send(err);
-
-            // get and return all the todos after you create another
-            Todo.find(function(err, todos) {
-                if (err)
+// PUT - update a task
+app.put('/api/tasks/:task_id', function(req, res) {
+    Task.findById(req.params.task_id, function(err, task) {
+        if (err) {
+            res.send(err);
+        } else {
+            task.text = req.body.text;
+            task.due = req.body.due;
+            task.save(function(err) {
+                if (err) {
                     res.send(err);
-                res.json(todos);
+                } else {
+                    Task.find(function(err, tasks) {
+                        if (err) {
+                            res.send(err);
+                        } else {
+                            res.json(tasks);
+                        }
+                    });
+                }
             });
-        });
+        }
     });
+});
 
-    // load the single view file (angular will handle the page changes on the front-end)
-    app.get('*', function(req, res) {
-        res.sendfile('./public/index.html');
+// DELETE - remove a task
+app.delete('/api/tasks/:task_id', function(req, res) {
+    Task.remove({
+        _id : req.params.task_id
+    }, function(err, task) {
+        if (err) {
+            res.send(err);
+        } else {
+            Task.find(function(err, tasks) {
+                if (err) {
+                    res.send(err);
+                } else {
+                    res.json(tasks);
+                }
+            });
+        }
     });
+ });
+
+// return the client ip
+app.get('/api/ip', function(req, res) {
+   res.json(req.ip); 
+});
+
+// load the single view file (angular will handle the page changes on the front-end)
+app.get('*', function(req, res) {
+    res.sendfile('./public/index.html');
+});
     
 // listen (start app with node server.js) ======================================
 app.listen(8080);
